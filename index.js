@@ -5,12 +5,12 @@ import router from "./routes/notesRouter.js"
 const app = express()
 
 try {
-    await mongoose.connect(process.env.MONGODB_URL)
+    await mongoose.connect(process.env.MONGODB_URI)
 
     app.listen(process.env.EXPRESS_PORT, () => {
         console.log(`Server is listening on port ${process.env.EXPRESS_PORT}`)
     })
-
+    
     app.use(express.json());
     app.use(express.urlencoded({extended: true}));
 

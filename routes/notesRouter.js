@@ -4,9 +4,32 @@ import {fakerNL} from "@faker-js/faker";
 
 const router = express.Router()
 
+router.use((req, res, next) => {
+    const headers = req.headers["accept"]
+    const method = req.method
+
+    if (headers && headers.includes("application/json") || method === "OPTIONS") {
+        next()
+    } else {
+        res.status(406).json({message: "Webservice only supports json."})
+    }
+})
+
 router.get("/notes", async (req, res) => {
     const notes = await Note.find({})
-    res.status(200).json(notes)
+    const collection = {
+        items: notes,
+        _links: {
+            self: {
+                href: `${process.env.BASE_URI}`
+            },
+            collection: {
+                href: `${process.env.BASE_URI}`
+            }
+        }
+    }
+
+    res.status(200).json(collection)
 })
 
 router.get("/notes/:id", async (req, res) => {
@@ -26,7 +49,7 @@ router.post("/notes", (req, res) => {
         body: req.body.body,
     })
     note.save()
-    res.status(200).json(note)
+    res.status(201).json(note)
 })
 
 router.put("/notes/:id", async (req, res) => {
@@ -51,7 +74,7 @@ router.delete("/notes/:id", async (req, res) => {
     try {
         const note = await Note.findById(id)
         await note.deleteOne()
-        res.status(200).send("item is verwijderd")
+        res.status(204).send()
     } catch (e) {
         res.status(400).send(e.message)
     }
@@ -76,7 +99,15 @@ router.post("/notes/seed", async (req, res) => {
         notes.push(note)
     }
 
-    res.status(200).send(notes)
+    res.status(201).send(notes)
+})
+
+router.options("/notes", (req, res) => {
+    res.header("Allow", "GET, POST, OPTIONS").status(204).send()
+})
+
+router.options("/notes/:id", (req, res) => {
+    res.header("Allow", "GET, PUT, DELETE, OPTIONS").status(204).send()
 })
 
 export default router
